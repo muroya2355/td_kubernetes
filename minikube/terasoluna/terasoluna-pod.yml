@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: terasoluna
+spec:
+  containers:
+
+  - name: httpd-container
+    image: muroya/td_httpd:1.0
+    ports:
+    - containerPort: 80
+
+  - name: tomcat-container
+    image: muroya/td_tomcat:1.0
+    env:
+    ports:
+    - containerPort: 8009
+
+  - name: alpine-container
+    image: muroya/td_alpine:1.0
+    tty: true
