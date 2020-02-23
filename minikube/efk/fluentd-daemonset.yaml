@@ -1,13 +1,16 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: fluentd
-  namespace: kube-system
+  namespace: default
   labels:
     k8s-app: fluentd-logging
     version: v1
     kubernetes.io/cluster-service: "true"
 spec:
+  selector:
+    matchLabels:
+      k8s-app: fluentd-logging
   template:
     metadata:
       labels:
@@ -15,17 +18,15 @@ spec:
         version: v1
         kubernetes.io/cluster-service: "true"
     spec:
-      serviceAccount: fluentd
-      serviceAccountName: fluentd
       tolerations:
       - key: node-role.kubernetes.io/master
         effect: NoSchedule
       containers:
       - name: fluentd
-        image: fluent/fluentd-kubernetes-daemonset:v1.3-debian-elasticsearch
+        image: fluent/fluentd-kubernetes-daemonset:elasticsearch
         env:
           - name:  FLUENT_ELASTICSEARCH_HOST
-            value: "elasticsearch.logging"
+            value: "elasticsearch"
           - name:  FLUENT_ELASTICSEARCH_PORT
             value: "9200"
           - name: FLUENT_ELASTICSEARCH_SCHEME
