@@ -1,0 +1,53 @@
+# eksctl create cluster --config-file=eksctl-config.yaml
+
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: eks-cluster
+  region: ap-northeast-1
+
+iam:
+  withOIDC: true
+  serviceAccounts:
+  - metadata:
+      name: eks-service-role
+    attachPolicyARNs:
+    - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+    - arn:aws:iam::aws:policy/AmazonEKSServicePolicy
+# serviceRoleARN: "arn:aws:iam::xxxxxxxxxxx:role/eksServiceRole"
+
+vpc:
+  id: "vpc-xxxxxxxxxxx"
+  cidr: "192.168.0.0/16"
+  subnets:
+    public:
+      ap-northeast-1a:
+          id: "subnet-xxxxxxxxxxx"
+          cidr: "192.168.32.0/19"
+      ap-northeast-1c:
+          id: "subnet-xxxxxxxxxxx"
+          cidr: "192.168.64.0/19"
+  securityGroup: sg-xxxxxxxxxxx
+  clusterEndpoints:
+    privateAccess: false
+    publicAccess: true
+
+managedNodeGroups:
+  - name: eks-node-group
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+#     instanceRoleARN: "arn:aws:iam::xxxxxxxxxxx:role/NodeInstanceRole"
+    availabilityZones: ["ap-northeast-1a", "ap-northeast-1c"]
+    ssh:
+      allow: true
+      publicKeyName: 'xxxxxxxxxxx'
+    labels: {role: worker}
+    instanceType: t3.small
+    volumeSize: 20
+    minSize: 1
+    desiredCapacity: 2
+    maxSize: 3

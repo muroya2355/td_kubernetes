@@ -1,0 +1,102 @@
+# aws cloudformation validate-template --template-body file://C:\Users\user\td_kubernetes\20_eks\21_aws\cloudformation-create-ec2instance.yaml
+
+---
+  AWSTemplateFormatVersion: '2010-09-09'
+  Description: 'Provision EC2'
+  
+  Parameters:
+    PublicEC2IP:
+      Type: String
+      Default: 192.168.32.10
+
+    PrivateEC2IP:
+      Type: String
+      Default: 192.168.99.100
+
+  
+  Resources:
+    PublicEC2Instance:
+      Type: AWS::EC2::Instance
+      Properties: 
+        ImageId: ami-0af1df87db7b650f4
+        KeyName: eksKeyPair
+        InstanceType: t3.micro
+        NetworkInterfaces: 
+          - AssociatePublicIpAddress: "true"
+            DeviceIndex: "0"
+            SubnetId: !Select [0, !Split [",", !ImportValue PublicSubnetIds]]
+            PrivateIpAddress: !Ref PublicEC2IP
+            GroupSet:
+              - !Ref PublicEC2SG
+        Tags:
+            - Key: Name
+              Value: bation-host
+
+    PrivateEC2Instance:
+      Type: AWS::EC2::Instance
+      Properties: 
+        ImageId: ami-0af1df87db7b650f4
+        KeyName: testkeypair01
+        InstanceType: t3.micro
+        NetworkInterfaces: 
+          - AssociatePublicIpAddress: "false"
+            DeviceIndex: "0"
+            SubnetId: !Select [0, !Split [",", !ImportValue PrivateSubnetIds]]
+            PrivateIpAddress: !Ref PrivateEC2IP
+            GroupSet:
+              - !Ref PrivateEC2SG
+        Tags:
+            - Key: Name
+              Value: db-server
+  
+    PublicEC2SG:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupName: ec2-sg-pub
+        GroupDescription: Allow SSH and ICMP access
+        VpcId: !ImportValue VpcId
+        SecurityGroupIngress:
+          - IpProtocol: icmp
+            FromPort: 8
+            ToPort: -1
+            CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIp: 0.0.0.0/0
+
+    PrivateEC2SG:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupName: ec2-sg-pri
+        GroupDescription: Allow SSH and ICMP access
+        VpcId: !ImportValue VpcId
+        SecurityGroupIngress:
+          - IpProtocol: icmp
+            FromPort: 8
+            ToPort: -1
+            CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 5432
+            ToPort: 5432
+            CidrIp: 0.0.0.0/0
+
+  Outputs:
+    EC2PublicIP:
+      Value: !GetAtt PublicEC2Instance.PublicIp
+      Export:
+        Name: EC2PublicIP
+    
+    EC2PrivateIP01:
+      Value: !GetAtt PublicEC2Instance.PrivateIp
+      Export:
+        Name: EC2PrivateIP01
+
+    EC2PrivateIP02:
+      Value: !GetAtt PrivateEC2Instance.PrivateIp
+      Export:
+        Name: EC2PrivateIP02
